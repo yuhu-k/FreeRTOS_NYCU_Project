@@ -321,7 +321,6 @@ static void prvRegTestTaskEntry1( void *pvParameters )
 		//vRegTest1Implementation();
 	    TickType_t xNextWakeTime;
 	    xNextWakeTime = xTaskGetTickCount();
-	    uint32_t freq = CS_getSMCLK();
 	    for(;;){
 	        vTaskDelayUntil( &xNextWakeTime, mainERROR_CHECK_TASK_PERIOD );
 

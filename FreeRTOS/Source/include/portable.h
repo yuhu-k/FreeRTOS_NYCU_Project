@@ -205,7 +205,7 @@ void vPortBackupASM() PRIVILEGED_FUNCTION;
 void vPortCheckPointRestore( void ) PRIVILEGED_FUNCTION;
 void vStartTimerA( void ) PRIVILEGED_FUNCTION;
 void vEndTimerA( void ) PRIVILEGED_FUNCTION;
-uint16_t vGetProcessTime( void ) PRIVILEGED_FUNCTION;
+uint32_t vGetProcessTime( void ) PRIVILEGED_FUNCTION;
 void SetBaseAddress(uint16_t BaseAddress) PRIVILEGED_FUNCTION;
 /*
  * The structures and methods of manipulating the MPU are contained within the
