@@ -179,9 +179,12 @@ vPortBackupASM: .asmfunc
 	push.w	sr
 	dint
 	nop
+
+	call_x	#vStartTimerA
 	pushm_x   #13, r15
 
 	;backup heap
+
 	mov_x #0000h, r9
 loopbh:
 	mov.w ucHeap(r9), heap_buffer(r9)
@@ -202,6 +205,7 @@ loopbr:
 	mov_x sp, &sp_buffer
 	mov_x pc, &pc_buffer
 
+	call_x	#vEndTimerA
 	popm_x #13, r15
 	pop.w sr
 	ret_x

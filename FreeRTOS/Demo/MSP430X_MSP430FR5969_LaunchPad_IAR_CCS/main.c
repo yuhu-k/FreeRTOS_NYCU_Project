@@ -132,13 +132,15 @@ int main( void )
 /*-----------------------------------------------------------*/
 
 void vApplicationTimerASetupContinueMode( void ){
+    uint16_t base_address = TIMER_A0_BASE;
     Timer_A_initContinuousModeParam InitContParam = {0};
     InitContParam.clockSource = TIMER_A_CLOCKSOURCE_SMCLK;
     InitContParam.clockSourceDivider = TIMER_A_CLOCKSOURCE_DIVIDER_1;
     InitContParam.startTimer = false;
     InitContParam.timerInterruptEnable_TAIE = TIMER_A_TAIE_INTERRUPT_DISABLE;
     InitContParam.timerClear = TIMER_A_DO_CLEAR;
-    Timer_A_initContinuousMode(TIMER_A1_BASE,&InitContParam);
+    Timer_A_initContinuousMode(base_address,&InitContParam);
+    SetBaseAddress(base_address);
 }
 
 /*-----------------------------------------------------------*/
@@ -261,7 +263,7 @@ static void prvSetupHardware( void )
 	CS_initClockSignal( CS_ACLK, CS_LFXTCLK_SELECT, CS_CLOCK_DIVIDER_1 );
 
 	/* Set SMCLK = DCO with frequency divider of 1. */
-	CS_initClockSignal( CS_SMCLK, CS_LFXTCLK_SELECT, CS_CLOCK_DIVIDER_1 );
+	CS_initClockSignal( CS_SMCLK, CS_DCOCLK_SELECT, CS_CLOCK_DIVIDER_1 );
 
 	/* Set MCLK = DCO with frequency divider of 1. */
 	CS_initClockSignal( CS_MCLK, CS_DCOCLK_SELECT, CS_CLOCK_DIVIDER_1 );

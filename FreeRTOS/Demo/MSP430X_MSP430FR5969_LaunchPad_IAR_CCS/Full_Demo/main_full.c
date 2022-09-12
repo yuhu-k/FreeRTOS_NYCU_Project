@@ -190,7 +190,7 @@ void main_full( void )
 				 "Reg1", 						/* Text name for the task - not used by the kernel. */
 				 configMINIMAL_STACK_SIZE, 		/* Stack to allocate to the task - in words not bytes! */
 				 mainREG_TEST_TASK_1_PARAMETER, /* The parameter passed into the task. */
-				 tskIDLE_PRIORITY, 				/* The task's priority. */
+				 mainCHECK_TASK_PRIORITY, 				/* The task's priority. */
 				 NULL );						/* Task handle is not needed, so NULL is passed. */
 
 	xTaskCreate( prvRegTestTaskEntry2, "Reg2", configMINIMAL_STACK_SIZE, mainREG_TEST_TASK_2_PARAMETER, tskIDLE_PRIORITY, NULL );
@@ -325,14 +325,10 @@ static void prvRegTestTaskEntry1( void *pvParameters )
 	    for(;;){
 	        vTaskDelayUntil( &xNextWakeTime, mainERROR_CHECK_TASK_PERIOD );
 
-	        vStartTimerA();
-
 	        vPortBackupASM();
 
-	        vEndTimerA();
 	        uint16_t time = vGetProcessTime();
-	        printf("Backup time: %u /", time);
-	        printf(" %u s\n", freq );
+	        printf("Backup time: %u cycles\n", time);
 	    }
 	}
 

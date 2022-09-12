@@ -206,32 +206,36 @@ void vPortCheckPointRestore(){
 
 uint16_t start_time = 0, end_time = 0;
 bool TimerStatus = false;
+uint16_t base_address;
 void vStartTimerA(){
-    Timer_A_clear(TIMER_A1_BASE);
-    Timer_A_startCounter(TIMER_A1_BASE,TIMER_A_CONTINUOUS_MODE);
+    Timer_A_clear(base_address);
+    Timer_A_startCounter(base_address,TIMER_A_CONTINUOUS_MODE);
     TimerStatus = true;
-    start_time = Timer_A_getCounterValue(TIMER_A1_BASE);
+    start_time = Timer_A_getCounterValue(base_address);
 }
 
 
 void vEndTimerA(){
     if(TimerStatus){
-        end_time = Timer_A_getCounterValue(TIMER_A1_BASE);
-        Timer_A_stop(TIMER_A1_BASE);
-        Timer_A_clear(TIMER_A1_BASE);
+        end_time = Timer_A_getCounterValue(base_address);
+        Timer_A_stop(base_address);
+        Timer_A_clear(base_address);
         TimerStatus = false;
     }
 }
 
 uint16_t vGetProcessTime(){
-    if(TimerStatus) end_time = Timer_A_getCounterValue(TIMER_A1_BASE);
+    if(TimerStatus) end_time = Timer_A_getCounterValue(base_address);
     return end_time-start_time;
 }
 
 void PrintRestoreTime(){
-    uint16_t freq = CS_getSMCLK();
-    printf("Restore time: %u /",vGetProcessTime());
-    printf(" %u s\n", freq );
+    uint32_t freq = CS_getSMCLK();
+    printf("Restore time: %u cycles\n",vGetProcessTime());
+}
+
+void SetBaseAddress(uint16_t BaseAddress){
+    base_address = BaseAddress;
 }
 
 
