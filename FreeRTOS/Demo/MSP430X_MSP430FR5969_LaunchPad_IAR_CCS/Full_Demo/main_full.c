@@ -324,10 +324,17 @@ static void prvRegTestTaskEntry1( void *pvParameters )
 	    for(;;){
 	        vTaskDelayUntil( &xNextWakeTime, mainERROR_CHECK_TASK_PERIOD );
 
+	        TA0CCTL0 &= ~CCIE;
 	        vPortBackupASM();
+	        TA0CCTL0 |= CCIE;
 
-	        uint16_t time = vGetProcessTime();
-	        printf("Backup time: %u cycles\n", time);
+	        uint32_t time = vGetProcessTime();
+	        if(time>=0x10000){
+	            uint16_t front = time>>16;
+	            printf("Backup time: %x%04x cycles\n",front,time);
+	        }else{
+	            printf("Backup time: %x cycles\n", time);
+	        }
 	    }
 	}
 

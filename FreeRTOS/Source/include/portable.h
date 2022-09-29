@@ -188,6 +188,13 @@ size_t xPortGetMinimumEverFreeHeapSize( void ) PRIVILEGED_FUNCTION;
     #define vPortFreeStack       vPortFree
 #endif
 
+typedef struct A_BLOCK_LINK
+{
+    struct A_BLOCK_LINK * pxNextFreeBlock; /*<< The next free block in the list. */
+    struct A_BLOCK_LINK * pxLastUsedBlock;
+    struct A_BLOCK_LINK * pxNextUsedBlock;
+    size_t xBlockSize;                     /*<< The size of the free block. */
+} BlockLink_t;
 /*
  * Setup the hardware ready for the scheduler to take control.  This generally
  * sets up a tick interrupt and sets timers for the correct tick frequency.

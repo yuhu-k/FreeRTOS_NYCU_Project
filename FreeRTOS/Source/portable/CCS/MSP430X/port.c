@@ -204,6 +204,8 @@ void vPortCheckPointRestore(){
     printf("No backuped data found\n");
 }
 
+
+// timer_a a2 setting. Be used to get the time on processing checkpoint
 uint16_t start_time = 0, end_time = 0;
 uint32_t total_time;
 bool TimerStatus = false;
@@ -228,24 +230,44 @@ void vEndTimerA(){
 
 uint32_t vGetProcessTime(){
     if(TimerStatus) end_time = Timer_A_getCounterValue(base_address);
-    return total_time + ( end_time - start_time );
+    return (total_time + ( end_time - start_time ));
 }
 
 void PrintRestoreTime(){
-    printf("Restore time: %u cycles\n",vGetProcessTime());
+    uint32_t time = vGetProcessTime();
+    if(time>=0x10000){
+        uint16_t front = time>>16;
+        printf("Restore time: %x%04x cycles\n",front,time);
+    }else{
+        printf("Restore time: %x cycles\n", time);
+    }
 }
 
 void SetBaseAddress(uint16_t BaseAddress){
     base_address = BaseAddress;
 }
 
-#pragma vector=TIMER2_A1_VECTOR
+#pragma vector=TIMER4_A1_VECTOR
 __interrupt void vTimerA2Overflow( void )
 {
-    TA2CTL &= ~TAIFG;
-    total_time += 0x10000;
     __bic_SR_register_on_exit( SCG1 + SCG0 + OSCOFF + CPUOFF );
-
+    total_time += 0x10000;
+    TA4CTL &= ~TAIFG;
 }
+
+extern BlockLink_t * xUsedBlockStart;
+extern uint8_t heap_buffer[ 0x3800 ];
+extern size_t xHeapStructSize = ( sizeof( BlockLink_t ) + ( ( size_t ) ( portBYTE_ALIGNMENT - 1 ) ) ) & ~( ( size_t ) portBYTE_ALIGNMENT_MASK );
+extern uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
+
+void preBackupHeap(){
+    uint16_t * heap = (uint16_t*) ucHeap;
+    uint16_t * heap_buf = (uint16_t*) heap_buffer;
+    int i;
+    for(i=0;i<0x1c00;i++){
+        heap_buf[i] = heap[i];  //1. shrink heap 2.use dma
+    }
+}
+
 
 

@@ -44,6 +44,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "portable.h"
 
 #undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 
@@ -88,11 +89,13 @@
 
 /* Define the linked list structure.  This is used to link free blocks in order
  * of their memory address. */
-typedef struct A_BLOCK_LINK
+/*typedef struct A_BLOCK_LINK
 {
-    struct A_BLOCK_LINK * pxNextFreeBlock; /*<< The next free block in the list. */
-    size_t xBlockSize;                     /*<< The size of the free block. */
-} BlockLink_t;
+    struct A_BLOCK_LINK * pxNextFreeBlock; //<< The next free block in the list.
+    struct A_BLOCK_LINK * pxLastUsedBlock;
+    struct A_BLOCK_LINK * pxNextUsedBlock;
+    size_t xBlockSize;                     //<< The size of the free block.
+} BlockLink_t;*/
 
 /*-----------------------------------------------------------*/
 
@@ -112,6 +115,10 @@ static void prvHeapInit( void ) PRIVILEGED_FUNCTION;
 
 /*-----------------------------------------------------------*/
 
+static void prvInsertUsedBlock(void * pv);
+
+static void prvFreeUsedBlock(void * pv);
+
 /* The size of the structure placed at the beginning of each allocated memory
  * block must by correctly byte aligned. */
 static const size_t xHeapStructSize = ( sizeof( BlockLink_t ) + ( ( size_t ) ( portBYTE_ALIGNMENT - 1 ) ) ) & ~( ( size_t ) portBYTE_ALIGNMENT_MASK );
@@ -125,6 +132,12 @@ PRIVILEGED_DATA static size_t xFreeBytesRemaining = 0U;
 PRIVILEGED_DATA static size_t xMinimumEverFreeBytesRemaining = 0U;
 PRIVILEGED_DATA static size_t xNumberOfSuccessfulAllocations = 0;
 PRIVILEGED_DATA static size_t xNumberOfSuccessfulFrees = 0;
+
+
+//Mark the start of used block
+BlockLink_t * xUsedBlockStart = NULL;
+PRIVILEGED_DATA static BlockLink_t * xUsedBlockEnd = NULL;
+
 
 /*-----------------------------------------------------------*/
 
@@ -283,6 +296,7 @@ void * pvPortMalloc( size_t xWantedSize )
     #endif /* if ( configUSE_MALLOC_FAILED_HOOK == 1 ) */
 
     configASSERT( ( ( ( size_t ) pvReturn ) & ( size_t ) portBYTE_ALIGNMENT_MASK ) == 0 );
+    prvInsertUsedBlock(pvReturn);
     return pvReturn;
 }
 /*-----------------------------------------------------------*/
@@ -294,6 +308,7 @@ void vPortFree( void * pv )
 
     if( pv != NULL )
     {
+        prvFreeUsedBlock(pv);
         /* The memory being freed will have an BlockLink_t structure immediately
          * before it. */
         puc -= xHeapStructSize;
@@ -373,7 +388,6 @@ void * pvPortCalloc( size_t xNum,
             ( void ) memset( pv, 0, xNum * xSize );
         }
     }
-
     return pv;
 }
 /*-----------------------------------------------------------*/
@@ -537,3 +551,39 @@ void vPortGetHeapStats( HeapStats_t * pxHeapStats )
     taskEXIT_CRITICAL();
 }
 /*-----------------------------------------------------------*/
+
+#include <stdio.h>
+void prvInsertUsedBlock(void * pv){
+    uint8_t * puc = ( uint8_t * ) pv;
+    BlockLink_t * pxLink;
+    if( pv != NULL){
+        puc -= xHeapStructSize;
+        pxLink = ( void * ) puc;
+        pxLink->pxNextUsedBlock = NULL;
+        if(xUsedBlockStart == NULL){
+            xUsedBlockStart = pxLink;
+            pxLink->pxLastUsedBlock = NULL;
+        }else{
+            xUsedBlockEnd->pxNextUsedBlock = pxLink;
+            pxLink->pxLastUsedBlock = xUsedBlockEnd;
+        }
+        xUsedBlockEnd = pxLink;
+    }
+}
+#include <stdio.h>
+void prvFreeUsedBlock(void * pv){
+    uint8_t * puc = ( uint8_t * ) pv;
+    BlockLink_t * pxLink;
+    if( pv != NULL){
+        puc -= xHeapStructSize;
+        pxLink = ( void * ) puc;
+        if(xUsedBlockEnd == pxLink) xUsedBlockEnd = pxLink->pxLastUsedBlock;
+        if(pxLink->pxLastUsedBlock == NULL){
+            xUsedBlockStart = pxLink->pxNextUsedBlock;
+            if(pxLink->pxNextUsedBlock != NULL) pxLink->pxNextUsedBlock->pxLastUsedBlock = NULL;
+        }else{
+            pxLink->pxLastUsedBlock->pxNextUsedBlock = pxLink->pxNextUsedBlock;
+            while(pxLink->pxNextUsedBlock != NULL) pxLink->pxNextUsedBlock->pxLastUsedBlock = pxLink->pxLastUsedBlock;
+        }
+    }
+}

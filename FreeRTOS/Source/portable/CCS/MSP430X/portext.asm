@@ -50,6 +50,8 @@
 	.global vStartTimerA
 	.global vEndTimerA
 	.global	PrintRestoreTime
+	.global preBackupHeap
+	.global preRestoreHeap
 
 	.def vPortPreemptiveTickISR
 	.def vPortCooperativeTickISR
@@ -177,8 +179,6 @@ xPortStartScheduler: .asmfunc
 
 vPortBackupASM: .asmfunc
 	push.w	sr
-	dint
-	nop
 
 	call_x	#vStartTimerA
 	pushm_x   #13, r15
@@ -191,12 +191,13 @@ loopbh:
 	add.a #2, r9
 	cmp.a #configTOTAL_HEAP_SIZE, r9
 	jlo loopbh
+;	call_x	#preBackupHeap
 
 	;backup ram
 	mov_x #1c00h, r9
 	mov_x #ram_buffer, r10
 loopbr:
-	mov.w @r9+, 0(r10)
+	mov.w @r9+,0(r10)
 	add.a #2, r10
 	cmp.a #2c00h, r9
 	jlo loopbr
