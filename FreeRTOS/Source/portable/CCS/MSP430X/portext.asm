@@ -35,6 +35,7 @@
 	%{
 		#include <stdint.h>
 		#include "FreeRTOS.h"
+		#include "dma.h"
 	%}
 
 	.global xTaskIncrementTick
@@ -52,6 +53,7 @@
 	.global	PrintRestoreTime
 	.global preBackupHeap
 	.global preRestoreHeap
+	.global DMA_startTransfer
 
 	.def vPortPreemptiveTickISR
 	.def vPortCooperativeTickISR
@@ -185,13 +187,14 @@ vPortBackupASM: .asmfunc
 
 	;backup heap
 
-	mov_x #0000h, r9
-loopbh:
-	mov.w ucHeap(r9), heap_buffer(r9)
-	add.a #2, r9
-	cmp.a #configTOTAL_HEAP_SIZE, r9
-	jlo loopbh
-;	call_x	#preBackupHeap
+;	mov_x #0000h, r9
+;loopbh:
+;	mov.w ucHeap(r9), heap_buffer(r9)
+;	add.a #2, r9
+;	cmp.a #configTOTAL_HEAP_SIZE, r9
+;	jlo loopbh
+	mov_x	#DMA_CHANNEL_0, r12
+	call_x	#DMA_startTransfer
 
 	;backup ram
 	mov_x #1c00h, r9
@@ -220,7 +223,6 @@ loopbr:
 
 	.align 2
 vPortRestoreASM: .asmfunc
-	call_x  #vStartTimerA
 	call_x	#vPortSetupTimerInterrupt
 
 	dint
@@ -248,8 +250,6 @@ looprr:
 
 	;move pc,sp
 	mov_x &sp_buffer, sp
-	call_x 	#vEndTimerA
-	call_x	#PrintRestoreTime
 	mov_x &pc_buffer, pc
 	.endasmfunc
 ;--------------------------------------------------------------

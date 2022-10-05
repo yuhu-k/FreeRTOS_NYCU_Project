@@ -238,7 +238,7 @@ void SetBaseAddress(uint16_t BaseAddress) PRIVILEGED_FUNCTION;
 typedef struct xBackupBuffer{
     uint32_t sp;
     uint8_t ram[0x1000];
-    uint8_t ucheap[0x3800];
+    uint8_t ucheap[configTOTAL_HEAP_SIZE];
 }BackupBuffer_t;
 
 #endif /* PORTABLE_H */

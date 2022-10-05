@@ -46,6 +46,9 @@
 #include "task.h"
 #include "semphr.h"
 
+/* DMA usage necessary */
+#include "dma.h"
+
 /* Standard demo includes, used so the tick hook can exercise some FreeRTOS
 functionality in an interrupt. */
 #include "EventGroupsDemo.h"
@@ -84,6 +87,7 @@ void vApplicationIdleHook( void );
 void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName );
 void vApplicationTickHook( void );
 void vApplicationTimerASetupContinueMode( void );
+void vApplicationDMASetupForCheckpointBackup( void );
 
 /* The heap is allocated here so the "persistent" qualifier can be used.  This
 requires configAPPLICATION_ALLOCATED_HEAP to be set to 1 in FreeRTOSConfig.h.
@@ -99,7 +103,7 @@ See http://www.freertos.org/a00111.html for more information. */
 #pragma PERSISTENT( pc_buffer )
 
 uint8_t ram_buffer[ 0x1000 ] = { 0 };
-uint8_t heap_buffer[ 0x3800 ] = { 0 };
+uint8_t heap_buffer[ configTOTAL_HEAP_SIZE ] = { 0 };
 uint32_t sp_buffer[ 1 ] = { 0 };
 uint32_t pc_buffer[ 1 ] = { 0 };
 uint8_t ucHeap[ configTOTAL_HEAP_SIZE ] = { 0 };
@@ -114,6 +118,7 @@ int main( void )
     //
 	prvSetupHardware();
 	vApplicationTimerASetupContinueMode();
+	vApplicationDMASetupForCheckpointBackup();
 
 	/* The mainCREATE_SIMPLE_BLINKY_DEMO_ONLY setting is described at the top
 	of this file. */
@@ -141,6 +146,23 @@ void vApplicationTimerASetupContinueMode( void ){
     InitContParam.timerClear = TIMER_A_DO_CLEAR;
     Timer_A_initContinuousMode(base_address,&InitContParam);
     SetBaseAddress(base_address);
+}
+
+/*-----------------------------------------------------------*/
+
+void vApplicationDMASetupForCheckpointBackup( void ){
+    DMA_initParam param;
+    uint16_t channel = DMA_CHANNEL_0;
+    param.channelSelect = channel;
+    param.transferModeSelect = DMA_TRANSFER_REPEATED_BLOCK;
+    param.transferSize = configTOTAL_HEAP_SIZE/2;
+    param.triggerSourceSelect = DMA_TRIGGERSOURCE_0;
+    param.transferUnitSelect = DMA_SIZE_SRCWORD_DSTWORD;
+    param.triggerTypeSelect = DMA_TRIGGER_RISINGEDGE;
+    DMA_init(&param);
+    DMA_setSrcAddress(channel,(uint16_t)ucHeap,DMA_DIRECTION_INCREMENT);
+    DMA_setDstAddress(channel,(uint16_t)heap_buffer,DMA_DIRECTION_INCREMENT);
+    DMA_enableTransfers(channel);
 }
 
 /*-----------------------------------------------------------*/

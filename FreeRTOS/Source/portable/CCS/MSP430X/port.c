@@ -190,6 +190,7 @@ extern void vPortTickISR( void );
 // check point
 #include "portable.h"
 #include "cs.h"
+#include "dma.h"
 extern uint32_t sp_buffer[ 1 ];
 
 void vPortCheckPointRestore(){
@@ -237,9 +238,9 @@ void PrintRestoreTime(){
     uint32_t time = vGetProcessTime();
     if(time>=0x10000){
         uint16_t front = time>>16;
-        printf("Restore time: %x%04x cycles\n",front,time);
+        printf("Restore time: %u * 65536 + %05u cycles\n",front,time);
     }else{
-        printf("Restore time: %x cycles\n", time);
+        printf("Restore time: %u cycles\n", time);
     }
 }
 
@@ -256,18 +257,7 @@ __interrupt void vTimerA2Overflow( void )
 }
 
 extern BlockLink_t * xUsedBlockStart;
-extern uint8_t heap_buffer[ 0x3800 ];
+extern uint8_t heap_buffer[ configTOTAL_HEAP_SIZE ];
 extern size_t xHeapStructSize = ( sizeof( BlockLink_t ) + ( ( size_t ) ( portBYTE_ALIGNMENT - 1 ) ) ) & ~( ( size_t ) portBYTE_ALIGNMENT_MASK );
 extern uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
-
-void preBackupHeap(){
-    uint16_t * heap = (uint16_t*) ucHeap;
-    uint16_t * heap_buf = (uint16_t*) heap_buffer;
-    int i;
-    for(i=0;i<0x1c00;i++){
-        heap_buf[i] = heap[i];  //1. shrink heap 2.use dma
-    }
-}
-
-
 
