@@ -176,11 +176,11 @@ void main_full( void )
 	/* Start all the standard demo/test tasks.  They have no particular
 	functionality, but do demonstrate how to use the FreeRTOS API and test the
 	kernel port. */
-	vStartDynamicPriorityTasks();
-	vCreateBlockTimeTasks();
-	vStartCountingSemaphoreTasks();
-	vStartGenericQueueTasks( tskIDLE_PRIORITY );
-	vStartRecursiveMutexTasks();
+	//vStartDynamicPriorityTasks();
+	//vCreateBlockTimeTasks();
+	//vStartCountingSemaphoreTasks();
+	//vStartGenericQueueTasks( tskIDLE_PRIORITY );
+	//vStartRecursiveMutexTasks();
 	vStartEventGroupTasks();
 	vStartTaskNotifyTask();
 
@@ -201,8 +201,8 @@ void main_full( void )
 
 	/* Register an example set of CLI commands, then start the task that manages
 	the CLI using a UART for input and output. */
-	vRegisterSampleCLICommands();
-	vUARTCommandConsoleStart( mainCOMMAND_CONSOLE_STACK_SIZE, mainCOMMAND_CONSOLE_TASK_PRIORITY );
+	//vRegisterSampleCLICommands();
+	//vUARTCommandConsoleStart( mainCOMMAND_CONSOLE_STACK_SIZE, mainCOMMAND_CONSOLE_TASK_PRIORITY );
 
 	/* Start the scheduler. */
 	vTaskStartScheduler();
@@ -325,13 +325,14 @@ static void prvRegTestTaskEntry1( void *pvParameters )
 	        vTaskDelayUntil( &xNextWakeTime, mainERROR_CHECK_TASK_PERIOD );
 
 	        TA0CCTL0 &= ~CCIE;
-	        vPortBackupASM();
+	        vPortBackup();
 	        TA0CCTL0 |= CCIE;
 
 	        uint32_t time = vGetProcessTime();
 	        if(time>=0x10000){
-	            uint16_t front = time>>16;
-	            printf("Backup time: %u * 65536 + %05u cycles\n",front,time);
+	            uint16_t front = time/10000;
+	            uint16_t back  = time%10000;
+	            printf("Backup time: %u%04u cycles\n",front,back);
 	        }else{
 	            printf("Backup time: %u cycles\n", time);
 	        }

@@ -47,6 +47,8 @@
 	.global heap_buffer
 	.global sp_buffer
 	.global pc_buffer
+	.global sp_buffer2
+	.global pc_buffer2
 	.global	ucHeap
 	.global vStartTimerA
 	.global vEndTimerA
@@ -197,18 +199,29 @@ vPortBackupASM: .asmfunc
 	call_x	#DMA_startTransfer
 
 	;backup ram
-	mov_x #1c00h, r9
-	mov_x #ram_buffer, r10
-loopbr:
-	mov.w @r9+,0(r10)
-	add.a #2, r10
-	cmp.a #2c00h, r9
-	jlo loopbr
+;	mov_x #1c00h, r9
+;	mov_x #ram_buffer, r10
+;loopbr:
+;	mov.w @r9+,0(r10)
+;	add.a #2, r10
+;	cmp.a #2c00h, r9
+;	jlo loopbr
+	mov_x	#DMA_CHANNEL_1, r12
+	call_x	#DMA_startTransfer
 
 	;backup pc,sp
+	mov_x &sp_buffer, r12
+	cmp.a #0, r12
+	jeq tobuf2
 	mov_x sp, &sp_buffer
 	mov_x pc, &pc_buffer
+	jmp	end
 
+tobuf2:
+	mov_x sp, &sp_buffer2
+	mov_x pc, &pc_buffer2
+
+end:
 	call_x	#vEndTimerA
 	popm_x #13, r15
 	pop.w sr
@@ -229,28 +242,40 @@ vPortRestoreASM: .asmfunc
 	nop
 
 	;restore heap
-	mov_x #0000h, r9
-looprh:
-	mov.w heap_buffer(r9), ucHeap(r9)
-	add.a #2, r9
-	cmp.a #configTOTAL_HEAP_SIZE, r9
-	jlo looprh
+;	mov_x #0000h, r9
+;looprh:
+;	mov.w heap_buffer(r9), ucHeap(r9)
+;	add.a #2, r9
+;	cmp.a #configTOTAL_HEAP_SIZE, r9
+;	jlo looprh
+	mov_x	#DMA_CHANNEL_3, r12
+	call_x	#DMA_startTransfer
 
 	;restore ram
-	mov_x #0000h, r9
-	mov_x #ram_buffer, r10
-looprr:
-	mov.w @r10+, 1c00h(r9)
-	add.a #2, r9
-	cmp.a #1000h, r9
-	jlo looprr
+;	mov_x #0000h, r9
+;	mov_x #ram_buffer, r10
+;looprr:
+;	mov.w @r10+, 1c00h(r9)
+;	add.a #2, r9
+;	cmp.a #1000h, r9
+;	jlo looprr
+	mov_x	#DMA_CHANNEL_2, r12
+	call_x	#DMA_startTransfer
 
 	;clear LOCKLPM5 bit in the PM5CTL0 register
 	bic.b #LOCKLPM5, &PM5CTL0_L
 
 	;move pc,sp
+	mov_x &sp_buffer, r12
+	cmp.a #0, r12
+	jeq tobuf2
 	mov_x &sp_buffer, sp
 	mov_x &pc_buffer, pc
+frombuf2:
+	mov_x &sp_buffer2, sp
+	mov_x &pc_buffer2, pc
+
+
 	.endasmfunc
 ;--------------------------------------------------------------
 

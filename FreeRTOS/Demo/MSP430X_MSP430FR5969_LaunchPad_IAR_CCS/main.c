@@ -101,11 +101,21 @@ See http://www.freertos.org/a00111.html for more information. */
 #pragma PERSISTENT( heap_buffer )
 #pragma PERSISTENT( sp_buffer )
 #pragma PERSISTENT( pc_buffer )
+#pragma PERSISTENT( ram_buffer2 )
+#pragma PERSISTENT( heap_buffer2 )
+#pragma PERSISTENT( sp_buffer2 )
+#pragma PERSISTENT( pc_buffer2 )
 
 uint8_t ram_buffer[ 0x1000 ] = { 0 };
 uint8_t heap_buffer[ configTOTAL_HEAP_SIZE ] = { 0 };
 uint32_t sp_buffer[ 1 ] = { 0 };
 uint32_t pc_buffer[ 1 ] = { 0 };
+
+uint8_t ram_buffer2[ 0x1000 ] = { 0 };
+uint8_t heap_buffer2[ configTOTAL_HEAP_SIZE ] = { 0 };
+uint32_t sp_buffer2[ 1 ] = { 0 };
+uint32_t pc_buffer2[ 1 ] = { 0 };
+
 uint8_t ucHeap[ configTOTAL_HEAP_SIZE ] = { 0 };
 
 /*-----------------------------------------------------------*/
@@ -151,18 +161,54 @@ void vApplicationTimerASetupContinueMode( void ){
 /*-----------------------------------------------------------*/
 
 void vApplicationDMASetupForCheckpointBackup( void ){
-    DMA_initParam param;
-    uint16_t channel = DMA_CHANNEL_0;
-    param.channelSelect = channel;
-    param.transferModeSelect = DMA_TRANSFER_REPEATED_BLOCK;
-    param.transferSize = configTOTAL_HEAP_SIZE/2;
-    param.triggerSourceSelect = DMA_TRIGGERSOURCE_0;
-    param.transferUnitSelect = DMA_SIZE_SRCWORD_DSTWORD;
-    param.triggerTypeSelect = DMA_TRIGGER_RISINGEDGE;
-    DMA_init(&param);
-    DMA_setSrcAddress(channel,(uint16_t)ucHeap,DMA_DIRECTION_INCREMENT);
-    DMA_setDstAddress(channel,(uint16_t)heap_buffer,DMA_DIRECTION_INCREMENT);
-    DMA_enableTransfers(channel);
+    DMA_initParam param_heap, param_sram;
+    uint16_t channel_heap = DMA_CHANNEL_0;
+    param_heap.channelSelect = channel_heap;
+    param_heap.transferModeSelect = DMA_TRANSFER_REPEATED_BLOCK;
+    param_heap.transferSize = configTOTAL_HEAP_SIZE/2;
+    param_heap.triggerSourceSelect = DMA_TRIGGERSOURCE_0;
+    param_heap.transferUnitSelect = DMA_SIZE_SRCWORD_DSTWORD;
+    param_heap.triggerTypeSelect = DMA_TRIGGER_RISINGEDGE;
+    DMA_init(&param_heap);
+    DMA_setSrcAddress(channel_heap,(uint16_t)ucHeap,DMA_DIRECTION_INCREMENT);
+    DMA_setDstAddress(channel_heap,(uint16_t)heap_buffer,DMA_DIRECTION_INCREMENT);
+    DMA_enableTransfers(channel_heap);
+
+    uint16_t channel_sram = DMA_CHANNEL_1;
+    param_sram.channelSelect = channel_sram;
+    param_sram.transferModeSelect = DMA_TRANSFER_REPEATED_BLOCK;
+    param_sram.transferSize = 0x1000/2;
+    param_sram.triggerSourceSelect = DMA_TRIGGERSOURCE_0;
+    param_sram.transferUnitSelect = DMA_SIZE_SRCWORD_DSTWORD;
+    param_sram.triggerTypeSelect = DMA_TRIGGER_RISINGEDGE;
+    DMA_init(&param_sram);
+    DMA_setSrcAddress(channel_sram,(uint16_t)0x1c00,DMA_DIRECTION_INCREMENT);
+    DMA_setDstAddress(channel_sram,(uint16_t)ram_buffer,DMA_DIRECTION_INCREMENT);
+    DMA_enableTransfers(channel_sram);
+
+    uint16_t channel_restore_ram = DMA_CHANNEL_2;
+    param_sram.channelSelect = channel_restore_ram;
+    param_sram.transferModeSelect = DMA_TRANSFER_REPEATED_BLOCK;
+    param_sram.transferSize = 0x1000/2;
+    param_sram.triggerSourceSelect = DMA_TRIGGERSOURCE_0;
+    param_sram.transferUnitSelect = DMA_SIZE_SRCWORD_DSTWORD;
+    param_sram.triggerTypeSelect = DMA_TRIGGER_RISINGEDGE;
+    DMA_init(&param_sram);
+    DMA_setSrcAddress(channel_restore_ram,(uint16_t)ram_buffer,DMA_DIRECTION_INCREMENT);
+    DMA_setDstAddress(channel_restore_ram,(uint16_t)0x1c00,DMA_DIRECTION_INCREMENT);
+    DMA_enableTransfers(channel_restore_ram);
+
+    uint16_t channel_restore_heap = DMA_CHANNEL_3;
+    param_sram.channelSelect = channel_restore_heap;
+    param_sram.transferModeSelect = DMA_TRANSFER_REPEATED_BLOCK;
+    param_sram.transferSize = configTOTAL_HEAP_SIZE/2;
+    param_sram.triggerSourceSelect = DMA_TRIGGERSOURCE_0;
+    param_sram.transferUnitSelect = DMA_SIZE_SRCWORD_DSTWORD;
+    param_sram.triggerTypeSelect = DMA_TRIGGER_RISINGEDGE;
+    DMA_init(&param_sram);
+    DMA_setSrcAddress(channel_restore_heap,(uint16_t)heap_buffer,DMA_DIRECTION_INCREMENT);
+    DMA_setDstAddress(channel_restore_heap,(uint16_t)ucHeap,DMA_DIRECTION_INCREMENT);
+    DMA_enableTransfers(channel_restore_heap);
 }
 
 /*-----------------------------------------------------------*/

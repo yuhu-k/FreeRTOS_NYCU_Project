@@ -192,12 +192,25 @@ extern void vPortTickISR( void );
 #include "cs.h"
 #include "dma.h"
 extern uint32_t sp_buffer[ 1 ];
+extern uint32_t sp_buffer2[ 1 ];
+extern uint32_t pc_buffer[ 1 ];
+extern uint32_t pc_buffer2[ 1 ];
+extern uint8_t ram_buffer[ 0x1000 ];
+extern uint8_t heap_buffer[ configTOTAL_HEAP_SIZE ];
+extern uint8_t ram_buffer2[ 0x1000 ];
+extern uint8_t heap_buffer2[ configTOTAL_HEAP_SIZE ];
+
 
 void vPortCheckPointRestore(){
-    uint32_t* buffer_pointer = (void*) sp_buffer;
-    if(*buffer_pointer != 0){
+    if(sp_buffer[0] != 0 || sp_buffer2[0] != 0){
         printf("Found backuped data, restoring...\n");
-
+        if(sp_buffer[0]){
+            DMA_setSrcAddress((uint8_t)DMA_CHANNEL_2,ram_buffer,DMA_DIRECTION_INCREMENT);
+            DMA_setSrcAddress((uint8_t)DMA_CHANNEL_3,heap_buffer,DMA_DIRECTION_INCREMENT);
+        }else{
+            DMA_setSrcAddress(DMA_CHANNEL_2,ram_buffer2,DMA_DIRECTION_INCREMENT);
+            DMA_setSrcAddress(DMA_CHANNEL_3,heap_buffer2,DMA_DIRECTION_INCREMENT);
+        }
         vPortRestoreASM();
         printf("Error, u should not back\n");
         for(;;);
@@ -205,6 +218,19 @@ void vPortCheckPointRestore(){
     printf("No backuped data found\n");
 }
 
+void vPortBackup(){
+    if(sp_buffer2[0] != 0) {
+        DMA_setDstAddress(DMA_CHANNEL_0,heap_buffer,DMA_DIRECTION_INCREMENT);
+        DMA_setDstAddress(DMA_CHANNEL_1,ram_buffer,DMA_DIRECTION_INCREMENT);
+        vPortBackupASM();
+        sp_buffer2[0] = 0;
+    }else{
+        DMA_setDstAddress(DMA_CHANNEL_0,heap_buffer2,DMA_DIRECTION_INCREMENT);
+        DMA_setDstAddress(DMA_CHANNEL_1,ram_buffer2,DMA_DIRECTION_INCREMENT);
+        vPortBackupASM();
+        sp_buffer[0] = 0;
+    }
+}
 
 // timer_a a2 setting. Be used to get the time on processing checkpoint
 uint16_t start_time = 0, end_time = 0;
@@ -237,8 +263,9 @@ uint32_t vGetProcessTime(){
 void PrintRestoreTime(){
     uint32_t time = vGetProcessTime();
     if(time>=0x10000){
-        uint16_t front = time>>16;
-        printf("Restore time: %u * 65536 + %05u cycles\n",front,time);
+        uint16_t front = time/10000;
+        uint16_t back  = time%10000;
+        printf("Restore time: %u%04u cycles\n",front,back);
     }else{
         printf("Restore time: %u cycles\n", time);
     }
@@ -255,9 +282,4 @@ __interrupt void vTimerA2Overflow( void )
     total_time += 0x10000;
     TA4CTL &= ~TAIFG;
 }
-
-extern BlockLink_t * xUsedBlockStart;
-extern uint8_t heap_buffer[ configTOTAL_HEAP_SIZE ];
-extern size_t xHeapStructSize = ( sizeof( BlockLink_t ) + ( ( size_t ) ( portBYTE_ALIGNMENT - 1 ) ) ) & ~( ( size_t ) portBYTE_ALIGNMENT_MASK );
-extern uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
 

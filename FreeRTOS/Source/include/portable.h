@@ -209,6 +209,7 @@ BaseType_t xPortStartScheduler( void ) PRIVILEGED_FUNCTION;
 void vPortEndScheduler( void ) PRIVILEGED_FUNCTION;
 void vPortRestoreASM() PRIVILEGED_FUNCTION;
 void vPortBackupASM() PRIVILEGED_FUNCTION;
+void vPortBackup() PRIVILEGED_FUNCTION;
 void vPortCheckPointRestore( void ) PRIVILEGED_FUNCTION;
 void vStartTimerA( void ) PRIVILEGED_FUNCTION;
 void vEndTimerA( void ) PRIVILEGED_FUNCTION;
