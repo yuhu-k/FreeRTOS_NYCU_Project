@@ -52,10 +52,10 @@
 	.global	ucHeap
 	.global vStartTimerA
 	.global vEndTimerA
-	.global	PrintRestoreTime
-	.global preBackupHeap
-	.global preRestoreHeap
 	.global DMA_startTransfer
+	.global boolPrintRuntime
+	.global sp_buffer_addr_for_asm
+	.global pc_buffer_addr_for_asm
 
 	.def vPortPreemptiveTickISR
 	.def vPortCooperativeTickISR
@@ -209,19 +209,17 @@ vPortBackupASM: .asmfunc
 	mov_x	#DMA_CHANNEL_1, r12
 	call_x	#DMA_startTransfer
 
+	mov_x	#boolPrintRuntime, r9
+	mov.w	#1, 0(r9)
+
 	;backup pc,sp
-	mov_x &sp_buffer, r12
-	cmp.a #0, r12
-	jeq tobuf2
-	mov_x sp, &sp_buffer
-	mov_x pc, &pc_buffer
-	jmp	end
+	mov_x #sp_buffer_addr_for_asm, r9
+	mov_x 0(r9), r10
+	mov_x sp, 0(r10)
+	mov_x #pc_buffer_addr_for_asm, r9
+	mov_x 0(r9), r10
+	mov_x pc, 0(r10)
 
-tobuf2:
-	mov_x sp, &sp_buffer2
-	mov_x pc, &pc_buffer2
-
-end:
 	call_x	#vEndTimerA
 	popm_x #13, r15
 	pop.w sr
@@ -262,19 +260,19 @@ vPortRestoreASM: .asmfunc
 	mov_x	#DMA_CHANNEL_2, r12
 	call_x	#DMA_startTransfer
 
+	mov_x	#boolPrintRuntime, r9
+	mov.w	#0000h, 0(r9)
+
 	;clear LOCKLPM5 bit in the PM5CTL0 register
 	bic.b #LOCKLPM5, &PM5CTL0_L
 
-	;move pc,sp
-	mov_x &sp_buffer, r12
-	cmp.a #0, r12
-	jeq tobuf2
-	mov_x &sp_buffer, sp
-	mov_x &pc_buffer, pc
-frombuf2:
-	mov_x &sp_buffer2, sp
-	mov_x &pc_buffer2, pc
-
+	;restore pc,sp
+	mov_x #sp_buffer_addr_for_asm, r9
+	mov_x 0(r9), r10
+	mov_x 0(r10), sp
+	mov_x #pc_buffer_addr_for_asm, r9
+	mov_x 0(r9), r10
+	mov_x 0(r10), pc
 
 	.endasmfunc
 ;--------------------------------------------------------------
