@@ -108,8 +108,8 @@ See http://www.freertos.org/a00111.html for more information. */
 
 uint8_t ram_buffer[ 0x1000 ] = { 0 };
 uint8_t heap_buffer[ configTOTAL_HEAP_SIZE ] = { 0 };
-uint32_t sp_buffer[ 1 ] = { 0 };
-uint32_t pc_buffer[ 1 ] = { 0 };
+uint32_t sp_buffer1[ 1 ] = { 0 };
+uint32_t pc_buffer1[ 1 ] = { 0 };
 
 uint8_t ram_buffer2[ 0x1000 ] = { 0 };
 uint8_t heap_buffer2[ configTOTAL_HEAP_SIZE ] = { 0 };

@@ -164,6 +164,9 @@ than in FreeRTOS_CLI.c, configAPPLICATION_PROVIDES_cOutputBuffer must be set to
 #endif
 char cOutputBuffer[ configCOMMAND_INT_MAX_OUTPUT_SIZE ] = { 0 };
 
+/* Used for avoiding print runtime after restoring */
+volatile uint8_t boolPrintRuntime[1] = { 0 };
+
 /* Used for maintaining a 32-bit run time stats counter from a 16-bit timer. */
 volatile uint32_t ulRunTimeCounterOverflows = 0;
 
@@ -328,13 +331,15 @@ static void prvRegTestTaskEntry1( void *pvParameters )
 	        vPortBackup();
 	        TA0CCTL0 |= CCIE;
 
-	        uint32_t time = vGetProcessTime();
-	        if(time>=0x10000){
-	            uint16_t front = time/10000;
-	            uint16_t back  = time%10000;
-	            printf("Backup time: %u%04u cycles\n",front,back);
-	        }else{
-	            printf("Backup time: %u cycles\n", time);
+	        if(*boolPrintRuntime == 1){
+	            uint32_t time = vGetProcessTime();
+	            if(time>=0x10000){
+	                uint16_t front = time/10000;
+	                uint16_t back  = time%10000;
+	                printf("Backup time: %u%04u cycles\n",front,back);
+	            }else{
+	                printf("Backup time: %u cycles\n", time);
+	            }
 	        }
 	    }
 	}

@@ -191,45 +191,57 @@ extern void vPortTickISR( void );
 #include "portable.h"
 #include "cs.h"
 #include "dma.h"
-extern uint32_t sp_buffer[ 1 ];
+
+extern uint32_t sp_buffer1[ 1 ];
 extern uint32_t sp_buffer2[ 1 ];
-extern uint32_t pc_buffer[ 1 ];
+extern uint32_t pc_buffer1[ 1 ];
 extern uint32_t pc_buffer2[ 1 ];
 extern uint8_t ram_buffer[ 0x1000 ];
 extern uint8_t heap_buffer[ configTOTAL_HEAP_SIZE ];
 extern uint8_t ram_buffer2[ 0x1000 ];
 extern uint8_t heap_buffer2[ configTOTAL_HEAP_SIZE ];
+uint32_t* sp_buffer_addr_for_asm[ 1 ];
+uint32_t* pc_buffer_addr_for_asm[ 1 ];
 
 
 void vPortCheckPointRestore(){
-    if(sp_buffer[0] != 0 || sp_buffer2[0] != 0){
+    if(sp_buffer1[0] != 0 || sp_buffer2[0] != 0){
         printf("Found backuped data, restoring...\n");
-        if(sp_buffer[0]){
-            DMA_setSrcAddress((uint8_t)DMA_CHANNEL_2,ram_buffer,DMA_DIRECTION_INCREMENT);
-            DMA_setSrcAddress((uint8_t)DMA_CHANNEL_3,heap_buffer,DMA_DIRECTION_INCREMENT);
+        if(sp_buffer1[0]){
+            DMA_setSrcAddress(DMA_CHANNEL_2,(uint32_t)ram_buffer,DMA_DIRECTION_INCREMENT);
+            DMA_setSrcAddress(DMA_CHANNEL_3,(uint32_t)heap_buffer,DMA_DIRECTION_INCREMENT);
+            *sp_buffer_addr_for_asm = sp_buffer1;
+            *pc_buffer_addr_for_asm = pc_buffer1;
         }else{
-            DMA_setSrcAddress(DMA_CHANNEL_2,ram_buffer2,DMA_DIRECTION_INCREMENT);
-            DMA_setSrcAddress(DMA_CHANNEL_3,heap_buffer2,DMA_DIRECTION_INCREMENT);
+            DMA_setSrcAddress(DMA_CHANNEL_2,(uint32_t)ram_buffer2,DMA_DIRECTION_INCREMENT);
+            DMA_setSrcAddress(DMA_CHANNEL_3,(uint32_t)heap_buffer2,DMA_DIRECTION_INCREMENT);
+            *sp_buffer_addr_for_asm = sp_buffer2;
+            *pc_buffer_addr_for_asm = pc_buffer2;
         }
         vPortRestoreASM();
-        printf("Error, u should not back\n");
+        printf("Error, u shall not pass!!\n");
         for(;;);
     }
     printf("No backuped data found\n");
 }
 
 void vPortBackup(){
-    if(sp_buffer2[0] != 0) {
-        DMA_setDstAddress(DMA_CHANNEL_0,heap_buffer,DMA_DIRECTION_INCREMENT);
-        DMA_setDstAddress(DMA_CHANNEL_1,ram_buffer,DMA_DIRECTION_INCREMENT);
+    if(sp_buffer1[0] == 0) {
+        DMA_setDstAddress(DMA_CHANNEL_0,(uint32_t)heap_buffer,DMA_DIRECTION_INCREMENT);
+        DMA_setDstAddress(DMA_CHANNEL_1,(uint32_t)ram_buffer,DMA_DIRECTION_INCREMENT);
+        *sp_buffer_addr_for_asm = sp_buffer1;
+        *pc_buffer_addr_for_asm = pc_buffer1;
         vPortBackupASM();
         sp_buffer2[0] = 0;
     }else{
-        DMA_setDstAddress(DMA_CHANNEL_0,heap_buffer2,DMA_DIRECTION_INCREMENT);
-        DMA_setDstAddress(DMA_CHANNEL_1,ram_buffer2,DMA_DIRECTION_INCREMENT);
+        DMA_setDstAddress(DMA_CHANNEL_0,(uint32_t)heap_buffer2,DMA_DIRECTION_INCREMENT);
+        DMA_setDstAddress(DMA_CHANNEL_1,(uint32_t)ram_buffer2,DMA_DIRECTION_INCREMENT);
+        *sp_buffer_addr_for_asm = sp_buffer2;
+        *pc_buffer_addr_for_asm = pc_buffer2;
         vPortBackupASM();
-        sp_buffer[0] = 0;
+        sp_buffer1[0] = 0;
     }
+
 }
 
 // timer_a a2 setting. Be used to get the time on processing checkpoint
@@ -260,16 +272,6 @@ uint32_t vGetProcessTime(){
     return (total_time + ( end_time - start_time ));
 }
 
-void PrintRestoreTime(){
-    uint32_t time = vGetProcessTime();
-    if(time>=0x10000){
-        uint16_t front = time/10000;
-        uint16_t back  = time%10000;
-        printf("Restore time: %u%04u cycles\n",front,back);
-    }else{
-        printf("Restore time: %u cycles\n", time);
-    }
-}
 
 void SetBaseAddress(uint16_t BaseAddress){
     base_address = BaseAddress;

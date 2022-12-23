@@ -20,7 +20,7 @@
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROJECT.MSP430FR5994.ccxml.TI MSP430 USB1/MSP430" value="RTOSDemo"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_TARGET_CONFIG" value="${target_config_active_default:RTOSDemo}"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP430FR5969.ccxml.TI MSP430 USB1/MSP430" value="/home/yuhu/FreeRTOS/FreeRTOS/Demo/MSP430X_MSP430FR5969_LaunchPad_IAR_CCS/Large_Data/RTOSDemo.out"/>
-<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP430FR5994.ccxml.TI MSP430 USB1/MSP430" value="C:\Users\kyh08436.cs08\FreeRTOS_NYCU_Project\FreeRTOS\Demo\MSP430X_MSP430FR5969_LaunchPad_IAR_CCS\Large_Data\RTOSDemo.out"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP430FR5994.ccxml.TI MSP430 USB1/MSP430" value="C:\Users\yh084\FreeRTOS_NYCU_Project\FreeRTOS\Demo\MSP430X_MSP430FR5969_LaunchPad_IAR_CCS\Large_Data\RTOSDemo.out"/>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
 <listEntry value="/RTOSDemo"/>
 </listAttribute>
